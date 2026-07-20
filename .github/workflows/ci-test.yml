@@ -5,6 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   test-suite:
@@ -20,20 +21,19 @@ jobs:
         php-version: '8.2'
         extensions: mysqli
 
-    - name: Start MySQL Service & Setup Database
+    - name: Start MySQL Service
       run: |
         sudo systemctl start mysql.service
         mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS quiz_pengupil;"
         mysql -uroot -proot -e "CREATE TABLE quiz_pengupil.users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), name VARCHAR(255), email VARCHAR(255), password VARCHAR(255));"
-        # Sesuaikan password koneksi MySQL pada runner
         sed -i "s/\$password = '';/\$password = 'root';/g" koneksi.php
 
-    - name: Run Built-in PHP Web Server
+    - name: Run Built-in PHP Server
       run: |
         php -S localhost:8000 &
         sleep 2
 
-    - name: Setup Python & Selenium
+    - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
@@ -43,10 +43,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install selenium
 
-    - name: Adjust base_url for CI Environment
+    - name: Adjust base_url for Runner
       run: |
-        # Mengubah base_url di test_auth.py agar menunjuk ke localhost:8000 di GitHub Actions
         sed -i 's|http://localhost/quiz-pengupil|http://localhost:8000|g' test_auth.py
 
-    - name: Execute Selenium Automation Test
+    - name: Execute Test
       run: python test_auth.py
