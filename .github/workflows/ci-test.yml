@@ -1,10 +1,14 @@
-name: PHP Web & Selenium Automation Test
+name: Automation Test
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
   pull_request:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 jobs:
@@ -12,40 +16,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Source Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Setup PHP Environment
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2'
-        extensions: mysqli
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli
 
-    - name: Start MySQL Service
-      run: |
-        sudo systemctl start mysql.service
-        mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS quiz_pengupil;"
-        mysql -uroot -proot -e "CREATE TABLE quiz_pengupil.users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), name VARCHAR(255), email VARCHAR(255), password VARCHAR(255));"
-        sed -i "s/\$password = '';/\$password = 'root';/g" koneksi.php
+      - name: Start MySQL and Setup DB
+        run: |
+          sudo systemctl start mysql.service
+          mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS quiz_pengupil;"
+          mysql -uroot -proot -e "CREATE TABLE quiz_pengupil.users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), name VARCHAR(255), email VARCHAR(255), password VARCHAR(255));"
+          sed -i "s/\$password = '';/\$password = 'root';/g" koneksi.php
 
-    - name: Run Built-in PHP Server
-      run: |
-        php -S localhost:8000 &
-        sleep 2
+      - name: Start Local PHP Server
+        run: |
+          php -S localhost:8000 &
+          sleep 2
 
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-    - name: Install Selenium
-      run: |
-        python -m pip install --upgrade pip
-        pip install selenium
+      - name: Install Selenium
+        run: |
+          python -m pip install --upgrade pip
+          pip install selenium
 
-    - name: Adjust base_url for Runner
-      run: |
-        sed -i 's|http://localhost/quiz-pengupil|http://localhost:8000|g' test_auth.py
+      - name: Adjust Target URL in Test Script
+        run: |
+          sed -i 's|http://localhost/quiz-pengupil|http://localhost:8000|g' test_auth.py
 
-    - name: Execute Test
-      run: python test_auth.py
+      - name: Run Test
+        run: python test_auth.py
